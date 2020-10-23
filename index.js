@@ -1,10 +1,45 @@
-const express = require('express');
+const { Op } = require('sequelize');
 
-const app = express();
+const Container = require('./container');
 
-app.listen(3000, () => console.log('ouvindo porta 3000!'));
+const start = require('./app');
 
-// não remova esse endpoint, e para o avaliador funcionar
-app.get('/', (request, response) => {
-  response.send();
+const services = require('./services');
+const controllers = require('./controllers');
+const models = require('./models');
+const utils = require('./utils');
+const middlewares = require('./middlewares');
+const Routers = require('./routers');
+
+require('dotenv/config');
+
+const config = {
+  PORT: process.env.PORT,
+};
+
+const app = new Container(start, {
+  services: {
+    object: services,
+    params: ['models', 'utils'],
+  },
+  models: {
+    object: { Op, ...models },
+  },
+  controllers: {
+    object: controllers,
+    params: ['services', 'utils'],
+  },
+  middlewares: {
+    object: middlewares,
+    params: ['services'],
+  },
+  utils: {
+    object: utils,
+  },
 });
+
+app.callInjection('services');
+app.callInjection('middlewares');
+app.injectOn('controllers');
+
+app.start(Routers, config);
