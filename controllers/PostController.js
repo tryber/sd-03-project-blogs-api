@@ -1,0 +1,57 @@
+const { Router } = require('express');
+const rescue = require('express-rescue');
+
+const router = Router();
+const services = require('../services');
+const authMiddleware = require('../middlewares/AuthMiddleware');
+
+router.post('/', authMiddleware, rescue(async (req, res, next) => {
+  const payload = req.body;
+  const data = req.user;
+
+  const response = await services.PostServices.CreatePost(payload, data);
+  if (response.error) return next(response.error);
+  res.status(201).json({
+    title: response.title,
+    content: response.content,
+    userId: response.userId,
+  });
+}));
+
+router.get('/', authMiddleware, rescue(async (req, res) => {
+  const response = await services.PostServices.GetAllPosts();
+  res.status(200).json(response);
+}));
+
+router.get('/search', authMiddleware, rescue(async (req, res) => {
+  const param = req.query;
+  const response = await services.PostServices.GetPostsByQuery(param.q);
+  res.status(200).json(response);
+}));
+
+router.get('/:id', authMiddleware, rescue(async (req, res, next) => {
+  const postId = req.params.id;
+  const response = await services.PostServices.GetPostById(postId);
+  if (response.error) return next(response.error);
+  res.status(200).json(response);
+}));
+
+router.put('/:id', authMiddleware, rescue(async (req, res, next) => {
+  const postId = req.params.id;
+  const userData = req.user;
+  const payload = req.body;
+  const response = await services.PostServices.UpdatePostById(payload, userData, postId);
+
+  if (response.error) return next(response.error);
+  res.status(200).json(response);
+}));
+
+router.delete('/:id', authMiddleware, rescue(async (req, res, next) => {
+  const postId = req.params.id;
+  const userData = req.user;
+  const response = await services.PostServices.DeletePostById(postId, userData);
+  if (response.error) return next(response.error);
+  res.status(204).json();
+}));
+
+module.exports = router;
