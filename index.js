@@ -1,10 +1,17 @@
-const express = require('express');
+require('dotenv/config');
+const app = require('./app');
 
-const app = express();
+const { PORT = 3000 } = process.env;
+const config = { port: PORT };
 
-app.listen(3000, () => console.log('ouvindo porta 3000!'));
-
-// não remova esse endpoint, e para o avaliador funcionar
-app.get('/', (request, response) => {
-  response.send();
-});
+app
+  .factory()
+  .then((appInstance) => {
+    appInstance.listen(config.port, () => {
+      console.log(`Ouvindo na porta ${config.port}`);
+    });
+  })
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
